@@ -5,6 +5,7 @@
   
  <mapper namespace="reserve">
  	
+ 	<!--  대석 -->
  	<!-- 선택한 서비스에 대한 예약을 삽입하는 구문 -->
  	<insert id="insertReserve" parameterType="reserve">
  		INSERT INTO RESERVE(RES_NUM,

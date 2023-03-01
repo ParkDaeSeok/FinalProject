@@ -5,6 +5,7 @@
   
  <mapper namespace="lcategory">
  	
+ 	<!--  대석 -->
  	<!-- 세탁 step2에서 상세설정들을 가져오는 구문 -->
  	<select id="selectLaundry" resultType="lcategory">
  		SELECT * 

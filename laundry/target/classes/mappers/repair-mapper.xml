@@ -5,6 +5,7 @@
   
  <mapper namespace="repair">
  	
+ 	<!--  대석 -->
  	<!-- 선택한 수선옵션들을 삽입하는 구문 -->
  	<insert id="insertRepair" parameterType="repair">
  		INSERT INTO REPAIR

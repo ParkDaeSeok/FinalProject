@@ -5,6 +5,7 @@
   
  <mapper namespace="subscribe">
  	
+ 	<!--  대석 -->
  	<!-- 구독예약을 신청 시 삽입하는 구문 -->
  	<insert id="insertSubscribe" parameterType="subscribe">
  		INSERT INTO SUBSCRIBE 

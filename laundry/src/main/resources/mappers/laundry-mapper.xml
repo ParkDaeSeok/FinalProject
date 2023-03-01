@@ -5,6 +5,7 @@
   
  <mapper namespace="laundry">
  	
+ 	<!--  대석 -->
  	<!-- 선택한 세탁옵션을 삽입하는 구문 -->
  	<insert id="insertLaundry" parameterType="laundry">
  		INSERT INTO LAUNDRY
