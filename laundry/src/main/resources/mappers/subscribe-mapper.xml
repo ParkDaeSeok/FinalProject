@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+ <mapper namespace="subscribe">
+ 	
+ 	<!-- 구독예약을 신청 시 삽입하는 구문 -->
+ 	<insert id="insertSubscribe" parameterType="subscribe">
+ 		INSERT INTO SUBSCRIBE 
+ 		VALUES(SEQ_SUBNO.NEXTVAL,
+ 			   #{memNum},
+ 			   #{subOption},
+ 			   SYSDATE,
+ 			   #{subEdate},
+ 			   #{price},
+ 			   #{subDay},
+ 			   'N') 
+ 	</insert>
+ 	
+ 	<!-- 구독변경예약을 신청 시 삽입하는 구문 -->
+ 	<insert id="insertSubChange" parameterType="subscribe">
+ 		INSERT INTO SUBSCRIBE 
+ 		VALUES(SEQ_SUBNO.NEXTVAL,
+ 			   #{memNum},
+ 			   #{subOption},
+ 			   #{subSdate},
+ 			   #{subEdate},
+ 			   #{price},
+ 			   #{subDay},
+ 			   'N') 
+ 	</insert>
+ 	
+ 	<!-- **************sewon*************** -->
+ 	
+ 	<select id="selectSubscribe" resultType="subscribe" parameterType="int">
+ 	 	SELECT * 
+ 	 	FROM SUBSCRIBE
+ 	 	WHERE MEM_NUM = #{memNum}
+ 	 	AND STATUS = 'Y'
+ 	 </select>
+ 	 
+ 
+ 	 <select id="selectMySubscribeList"  parameterType="int" resultType="subscribe" >
+ 	 	SELECT * 
+ 	 	FROM SUBSCRIBE
+ 	 	WHERE MEM_NUM = #{memNum}
+ 	 	ORDER BY SUB_NUM
+ 	 </select>
+
+ 	 <select id="selectSubscribeListforAll" resultType="subscribe" >
+ 	 	SELECT * 
+ 	 	FROM SUBSCRIBE
+ 	 	WHERE STATUS = 'Y'
+ 	 </select>
+ 	 
+ 	 <update id="subscriptionExtension" parameterType="int">
+ 	 	UPDATE SUBSCRIBE
+ 	 	SET SUB_EDATE = SYSDATE + 30
+ 	 	WHERE SUB_NUM = #{subNum}
+ 	 	AND STATUS = 'Y'
+ 	 </update>
+ 	 
+ 	 <update id="deleteExistingSubscribe" parameterType="int">
+ 	 	UPDATE SUBSCRIBE
+ 	 	SET STATUS = 'N'
+ 	 	WHERE SUB_NUM = #{existingSubNum}
+ 	 </update>
+ 	 
+  	 <update id="updateSuscribe" parameterType="int">
+ 	 	UPDATE SUBSCRIBE
+ 	 	SET STATUS = 'Y'
+ 	 	WHERE SUB_NUM = #{subNum}
+ 	 </update>	
+ 	
+ 	
+ 	<!-- 정민 -->
+ 	
+ 	
+ 	<!-- 관리자모드 통계관리  구독자수-->
+ 	<select id="subscribeCount" resultType="int">
+ 		SELECT COUNT(*)
+ 		FROM SUBSCRIBE
+ 	</select>
+ 	
+ 	<!-- 관리자모드 통계관리 월별 구독자수 -->
+ 	<select id="subscribeMonthCount" resultType="map">
+ 	 SELECT SUBSTR(SUB_SDATE,4,2) MONTH , COUNT(*) COUNT
+	 FROM SUBSCRIBE
+	 GROUP BY SUBSTR(SUB_SDATE,4,2)
+	 ORDER BY MONTH ASC
+ 	</select>
+ 	
+ </mapper>

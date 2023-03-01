@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+ <mapper namespace="lcategory">
+ 	
+ 	<!-- 세탁 step2에서 상세설정들을 가져오는 구문 -->
+ 	<select id="selectLaundry" resultType="lcategory">
+ 		SELECT * 
+ 		FROM LCATEGORY
+ 		WHERE STATUS = 'Y'
+ 	</select>
+ 	
+ </mapper>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+ <mapper namespace="review">
+ 
+
+ 	 <select id="selctReviewList" resultType="reviewAttachment">
+ 	    SELECT  R.RES_NUM, R.REV_NUM, R.REV_DATE,R.REV_CONTENT, R.RATE, R.STATUS, 
+           M.MEM_NUM, M.MEM_NAME, M.MEM_ID, A.ATT_NUM, A.ORIGIN_NAME, A.CHANGE_NAME, A.FILE_PATH, A.UPLOAD_DATE
+	    FROM REVIEW R
+	    LEFT JOIN ATTACHMENT A
+	    ON (R.REV_NUM = A.REV_NUM)
+	    JOIN RESERVE RE ON(R.RES_NUM = RE.RES_NUM)
+	    JOIN MEMBER M ON(RE.MEM_NUM = M.MEM_NUM)
+	    WHERE R.STATUS = 'Y'
+ 	 </select>
+ 	 
+ 	 <!-- 정민 -->
+ 
+ 	<!-- 관리자모드 통계관리에서  총 후기수 쿼리문 -->
+ 	<select id="selectCount" resultType="int">
+ 		SELECT COUNT(*) 
+ 		FROM REVIEW
+ 	</select>
+ 	
+ 	<!-- 재웅 -->
+ 	<insert id="insertReview" parameterType="review">
+ 		INSERT INTO REVIEW(REV_NUM, RES_NUM, REV_CONTENT, RATE)
+ 		VALUES(SEQ_REVNO.NEXTVAL, #{resNum}, #{revContent}, #{rate})
+ 	</insert>
+ 	
+ 	<select id="selectReview" resultType="review">
+ 		SELECT RV.RES_NUM, REV_NUM, REV_DATE, REV_CONTENT, RATE, RV.STATUS, ME.MEM_NUM, ME.MEM_NAME, ME.MEM_ID
+ 		FROM REVIEW RV
+ 		JOIN RESERVE RE ON RV.RES_NUM = RE.RES_NUM 
+	    JOIN MEMBER ME ON RE.MEM_NUM = ME.MEM_NUM
+ 		WHERE RV.STATUS = 'Y' AND RV.RES_NUM = #{resNum}
+ 	</select>
+ 	
+ 	<insert id="insertRevAttachment" parameterType="attachment">
+ 		INSERT INTO ATTACHMENT(ATT_NUM, ORIGIN_NAME, CHANGE_NAME, FILE_PATH, REV_NUM)
+ 		VALUES(SEQ_ATTNO.NEXTVAL, #{orginName}, #{changeName}, #{filePath}, #{revNum})
+ 	</insert>
+ 
+ 	 
+ 	
+ </mapper>

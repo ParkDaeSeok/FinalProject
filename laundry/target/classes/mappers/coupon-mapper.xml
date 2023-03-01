@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+ <mapper namespace="coupon">
+ 
+ 	 <insert id="insertCoupon" parameterType="coupon">
+		INSERT INTO COUPON(COU_NUM, 
+							MEM_NUM, 
+							COU_TYPE,
+							ISSUE_DATE,
+							EXP_DATE,
+							DISCOUNT
+							 )
+		VALUES( SEQ_COUNO.NEXTVAL, 
+				#{memNum},
+				#{couType},
+				SYSDATE,
+				SYSDATE+30 ,
+				#{discount})
+ 	 </insert>
+ 	 <select id="selectCouponList" parameterType="int" resultType="coupon">
+ 	 	SELECT *
+ 	 	FROM COUPON
+ 	 	WHERE MEM_NUM = #{memNum}
+ 	 	AND STATUS = 'Y'
+ 	 </select>
+ 	<select id="selectCouponListForAll" resultType="coupon">
+ 	 	SELECT *
+ 	 	FROM COUPON
+ 	 	WHERE STATUS = 'Y'
+ 	 </select>
+ 	 
+ 	 <update id="couponEdateUpdate" parameterType="int">
+ 	 	UPDATE COUPON
+ 	 	SET STATUS = 'N'
+ 	 	WHERE COU_NUM = #{couNum}
+ 	 
+ 	 </update>
+ 	 
+ 
+ 	 
+ 	
+ </mapper>

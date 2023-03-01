@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+ <mapper namespace="payment">
+ 
+	<!-- 사용자가 step3 에서 선택한 서비스의 예약 번호, 수거날짜, 요구사항, 총 금액 조회 쿼리문 -->
+	<select id="selectRecentReserve" resultType="reserve" parameterType="map">
+		SELECT R.RES_NUM, R.PICKUP_DATE, R.DEL_DATE, R.REQUEST, R.TOTAL_PAY
+		  FROM (   <!-- ROWNUM 사용을 위한 인라인뷰 -->
+			       SELECT *
+          		     FROM RESERVE
+         		    WHERE RES_TYPE = #{ resType }
+      		     ORDER BY RES_NUM DESC
+     		   ) R
+		 WHERE MEM_NUM = ${ memNum }  
+		   AND RES_STATUS = 'N' <!-- 'N' 로 할 예정 -->
+		   AND PAY_STATUS = 'N' <!-- 'N' 으로 할 예정 조회를 위해 임시로 Y 넣음 -->
+		   AND ROWNUM = 1 <!-- 현재 예약들 중에서 가장 최신값 가져오기 위한 조건 -->
+	</select>
+	
+	<!-- 사용자가 Step 3 에서 선택한 세탁 서비스를 조회하는 쿼리문 -->
+	<select id="selectedLcategory" resultType="lcategory" parameterType="int">
+		SELECT MCATEGORY, SCATEGORY, L_PRICE
+		  FROM LCATEGORY
+		  JOIN LAUNDRY USING (CAT_NUM)
+		 WHERE RES_NUM = ${ resNum }
+  		   AND LCATEGORY.STATUS = 'Y' <!-- 카테고리 목록 중 삭제가 안된 것만 조회 -->
+	</select>
+	
+	<!-- 사용자가 Step 3 에서 선택한 수선 서비스를 조회하는 쿼리문 -->
+	<select id="selectedRepair" resultType="repair" parameterType="int">
+		SELECT R_CATEGORY, LENGTH_YN, WIDTH_YN, RESEAL_YN, ZIP_YN, R_PRICE
+		  FROM REPAIR
+		 WHERE RES_NUM = ${ resNum }
+	</select>
+	
+	<!-- 사용자가 Step 3 에서 선택한 구독 서비스를 조회하는 쿼리문 -->
+	<select id="selectedSubscribe" resultType="subscribe" parameterType="int">
+		SELECT S.*
+		FROM (  SELECT SUB_NUM, SUB_OPTION, SUB_SDATE, SUB_EDATE, PRICE, SUB_DAY
+			FROM SUBSCRIBE
+			WHERE MEM_NUM = ${ memNum }
+			AND STATUS = 'N'
+			ORDER BY SUB_NUM DESC ) S
+		WHERE ROWNUM = 1 
+	</select>
+	
+	<!-- 현재 회원이 가진 쿠폰의 총 개수를 조회하는 쿼리문 (페이징 처리용) -->
+	<select id="couponCount" resultType="int" parameterType="int">
+		SELECT COUNT(*)
+          FROM COUPON
+         WHERE MEM_NUM = ${ memNum }
+	</select>
+	
+	<!-- 현재 회원이 가진 쿠폰의 정보를 조회하는 쿼리문 (페이징 처리용) -->
+	<select id="selectCouponList" resultType="coupon" parameterType="map">
+		SELECT C.*
+		  FROM ( SELECT ROWNUM RNUM, COU_NUM, COU_TYPE, ISSUE_DATE, EXP_DATE, DISCOUNT
+				   FROM COUPON
+				  WHERE MEM_NUM = ${ memNum }
+				    AND EXP_DATE >= TO_CHAR(SYSDATE, 'RR/MM/DD')
+				    AND STATUS = 'Y'		  
+		  		) C
+		 WHERE C.RNUM BETWEEN ${ startRow } AND ${ endRow }
+	</select>
+	
+	<!-- 현재 회원이 가진 카드의 정보를 조회하는 쿼리문 -->
+	<select id="selectCardInfo" resultType="card" parameterType="int">
+		SELECT CARD_ID, MEM_NUM, CARD_NUM, CARD_COM, CARD_CVC, TO_CHAR(EXP_DATE, 'MM/RR') EXP_DATE, STATUS
+		  FROM CARD
+		 WHERE MEM_NUM = ${ memNum }
+		   AND EXP_DATE >= TO_CHAR(SYSDATE, 'RR/MM/DD')
+		   AND STATUS = 'Y'
+	</select>
+		
+	<!-- 입력받은 카드 정보를 CARD 테이블에 삽입하는 쿼리문 -->	
+	<insert id="insertCard" parameterType="map">
+		INSERT INTO CARD
+		VALUES (SEQ_CARDNO.NEXTVAL, 
+				${ memNum }, 
+				${ cardNum }, 
+				#{ cardCom }, 
+				${ cardCVC }, 
+				#{ expDate }, 
+				'Y')
+	</insert>
+	
+	<!-- 입력받은 카드 정보로 기존 카드 정보를 갱신하는 쿼리문 -->
+	<update id="updateCard" parameterType="map">
+		UPDATE CARD
+		   SET CARD_NUM = ${ cardNum },
+		       CARD_COM = #{ cardCom },
+		       CARD_CVC = ${ cardCVC },
+		       EXP_DATE = TO_DATE(#{ expDate }, 'YY/MM/DD')
+		 WHERE CARD_ID = ${ cardId }
+		   AND MEM_NUM = ${ memNum }
+	</update>
+	
+	<!-- 사용한 쿠폰의 STATUS를 갱신하는 쿼리문 -->
+	<update id="updateCoupon" parameterType="int">
+		UPDATE COUPON
+		   SET STATUS = 'N'
+		 WHERE COU_NUM = ${ couNum }
+	</update>
+	
+	<!-- 선택한 서비스의 RES_STATUS, PAY_STATUS 를 갱신하는 쿼리문 -->
+	<update id="updateReservePay" parameterType="map">
+		UPDATE RESERVE
+		   SET RES_STATUS = 'N', <!-- 실 서비스 시, Y로 바꿔줘야 함 테스트용으로 N으로 설정 -->
+               PAY_STATUS = 'Y',  <!-- 실 서비스 시, Y로 바꿔줘야 함 테스트용으로 N으로 설정 -->
+               TOTAL_PAY = ${ totalPrice }
+		 WHERE RES_NUM = ${ resNum }
+	</update>
+	
+	<!-- 선택한 서비스에 대해 결제 정보를 PAYMENT 테이블에 삽입하는 쿼리문 -->
+	<insert id="insertPayment" parameterType="map">
+		INSERT INTO PAYMENT
+		VALUES (SEQ_PAYNO.NEXTVAL, #{ subNum }, #{ resNum }, #{ couNum }, ${ cardId }, SYSDATE, DEFAULT, 'Y') <!-- 실서비스 시, 4 대신 SEQ_PAYNO.NEXTVAL -->
+	</insert>
+	
+	<!-- 선택한 구독 서비스의 STATUS 를 갱신하는 메소드 -->
+	<update id="updateSubscribeStatus" parameterType="int">
+		UPDATE SUBSCRIBE
+		   SET STATUS = 'Y'
+		 WHERE SUB_NUM = ${ subNum }
+	</update>
+	
+	<!--******************** sewon ********************* -->
+	
+	 <select id="selectSubPayment" resultType="subscribePayment" parameterType="int">
+ 	 	SELECT P.PAY_NUM,C.MEM_NUM, S.SUB_NUM, P.RES_NUM, P.COU_NUM,P.PAY_DATE,  P.REFUND, 
+          C.CARD_NUM, C.CARD_COM, C.CARD_CVC, C.EXP_DATE, C.STATUS, S.SUB_OPTION, 
+           S.SUB_SDATE, S.SUB_EDATE, S.PRICE, S.SUB_DAY, S.STATUS
+		FROM PAYMENT P
+		JOIN CARD C
+		ON(P.CARD_ID = C.CARD_ID)
+        JOIN SUBSCRIBE S
+        ON(P.SUB_NUM = S.SUB_NUM)
+ 	 	WHERE S.SUB_NUM = #{memNum}
+ 	 	AND P.SUB_NUM IS NOT NULL
+ 	 	AND P.STATUS = 'Y'
+        AND S.STATUS = 'Y'
+ 	 </select>
+ 	 
+ 	 <update id="changePayment" parameterType="map">
+ 	 	UPDATE CARD
+ 	 	SET CARD_NUM = #{cardNum},
+ 	 		CARD_COM = #{cardCom},
+ 	 		CARD_CVC = #{cardCvc},
+ 	 		EXP_DATE = #{expDate}
+ 	 	WHERE MEM_NUM = #{memNum}
+ 	 </update>
+ 	 
+ 	 <select id="paymentList" resultType="subscribePayment" parameterType="int">
+		SELECT PAY_NUM, C.MEM_NUM, P.SUB_NUM subNum, P.RES_NUM resNum, P.COU_NUM, P.PAY_DATE, P.REFUND, C.CARD_NUM, C.CARD_COM, C.CARD_CVC, C.EXP_DATE cardExpDate, C.STATUS cardStatus
+		       , S.SUB_OPTION subOption, S.SUB_SDATE subSdate, S.SUB_EDATE subEdate
+		       , S.PRICE subPrice, S.SUB_DAY subDay, S.STATUS subStatus
+		       , R.TOTAL_PAY resPrice, R.RES_TYPE resType
+		FROM PAYMENT P
+		LEFT JOIN CARD C ON (P.CARD_ID = C.CARD_ID)
+		LEFT JOIN SUBSCRIBE S ON (P.SUB_NUM = S.SUB_NUM)
+		LEFT JOIN RESERVE R ON (P.RES_NUM = R.RES_NUM)
+		WHERE C.MEM_NUM = #{memNum}
+		ORDER BY PAY_NUM
+ 	 </select>
+ 	 
+ 	 <update id="updateSubNum" parameterType="map">
+ 	 	UPDATE PAYMENT
+ 	 	SET SUB_NUM = #{newSubNum}	 
+ 	 	WHERE SUB_NUM = #{existingSubNum}
+ 	 </update> 
+	
+    <update id="cancelSubscription" parameterType="int">
+ 	 	UPDATE PAYMENT P
+ 	 	SET REFUND = 'Y'
+ 	 	WHERE SUB_NUM = #{subNum}
+ 	</update>
+ 	
+ 	<select id="isSubscribeRefund" parameterType="int" resultType="payment">
+ 		SELECT *
+ 		FROM PAYMENT
+ 		WHERE SUB_NUM = #{subNum}
+
+ 	</select>
+ 
+ 	
+ </mapper>

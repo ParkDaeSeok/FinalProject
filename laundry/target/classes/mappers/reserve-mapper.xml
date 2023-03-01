@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+ <mapper namespace="reserve">
+ 	
+ 	<!-- 선택한 서비스에 대한 예약을 삽입하는 구문 -->
+ 	<insert id="insertReserve" parameterType="reserve">
+ 		INSERT INTO RESERVE(RES_NUM,
+                    MEM_NUM,
+                    RES_TYPE,
+                    RES_DATE,
+                    PICKUP_DATE,
+                    REQUEST,
+                    DEL_DATE,
+                    RES_STATUS,
+                    PAY_STATUS,
+                    TOTAL_PAY) 
+		VALUES(SEQ_RESNO.NEXTVAL,
+		       #{memNum},
+		       #{resType},
+		       SYSDATE,
+		       #{pickupDate},
+		       #{request},
+		       #{delDate},
+		       'N',
+		       'N',
+		       #{totalPay})
+ 	</insert>
+ 	
+ 	<!-- 삽입한 예약을 가져오는 구문 -->
+ 	<select id="selectReserve" parameterType="reserve" resultType="reserve">
+ 		SELECT *
+ 		FROM RESERVE
+ 		WHERE RES_TYPE = #{resType}
+ 		  AND PICKUP_DATE = #{pickupDate}
+ 		  AND DEL_DATE = #{delDate}
+ 		  AND TOTAL_PAY = #{totalPay}
+ 		  <if test="request != ''">
+ 		  AND REQUEST = #{request}
+ 		  </if>
+ 		  <if test="request == ''">
+ 		  AND REQUEST IS NULL
+ 		  </if> 
+ 	</select>
+ 	
+ 	
+ 	<!-- 정민 -->
+ 	
+ 	<!-- 관리자모드 서비스관리에서 예약서비스 리스트 쿼리문 -->
+ 	<select id="resServiceList" resultType="reserve">
+ 		        
+		SELECT MEM_NUM , RES_NUM , RES_TYPE , RES_DATE , PICKUP_DATE , 
+        REQUEST , DEL_DATE
+        FROM RESERVE
+        ORDER BY PICKUP_DATE ASC
+ 	</select>
+ 	
+ 	<!-- 관리자모드 서비스관리에서 예약서비스리스트 배달예정날짜 수정 쿼리문 -->
+ 	<update id="updateRes" parameterType="reserve">
+ 		UPDATE RESERVE
+ 		SET DEL_DATE = #{delDate}
+ 		WHERE RES_NUM = ${resNum}
+ 	</update>
+ 	
+ 	
+ 	
+ 	<!-- 재웅 -->
+ 	<select id="reserveCount" resultType="int" parameterType="int">
+ 		SELECT COUNT(*)
+ 		FROM RESERVE
+ 		WHERE MEM_NUM = #{memNum} AND PAY_STATUS = 'Y'
+ 	</select>
+ 	
+ 	<select id="reserveTypeCount" resultType="int" parameterType="map">
+ 		SELECT COUNT(*)
+ 		FROM RESERVE
+ 		WHERE MEM_NUM = #{memNum} AND RES_TYPE = #{resType} AND PAY_STATUS = 'Y'
+ 	</select>
+ 
+ 	<select id="selectResList" resultType="reserve" parameterType="map">
+ 		SELECT *
+ 		FROM (
+		 	SELECT ROWNUM RNUM, A.*
+		 	FROM (
+						SELECT *
+						FROM RESERVE
+						WHERE MEM_NUM = #{memNum} AND PAY_STATUS = 'Y'
+						ORDER BY RES_NUM DESC) A)
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectResTypeList" resultType="reserve" parameterType="map">
+ 		SELECT *
+ 		FROM (
+		 	SELECT ROWNUM RNUM, A.*
+		 	FROM (
+						SELECT *
+						FROM RESERVE
+						WHERE MEM_NUM = #{memNum} AND RES_TYPE = #{resType} AND PAY_STATUS = 'Y'
+						ORDER BY RES_NUM DESC) A)
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+ 	 
+ 	 <select id="resListDetail" resultType="reservedetail" parameterType="int">
+ 	 	SELECT R.RES_NUM, R.MEM_NUM, RES_TYPE, RES_DATE, PICKUP_DATE, REQUEST, DEL_DATE, RES_STATUS, PAY_STATUS, TOTAL_PAY, L.LAU_NUM, L.CAT_NUM, LC.MCATEGORY, LC.SCATEGORY, LC.L_PRICE, LC.STATUS, RE.REP_NUM, RE.R_CATEGORY, RE.LENGTH_YN, RE.WIDTH_YN, RE.RESEAL_YN, RE.ZIP_YN, RE.R_PRICE, P.PAY_NUM, P.SUB_NUM, P.COU_NUM, P.CARD_ID, P.REFUND, C.CARD_NUM, C.CARD_COM, C.CARD_CVC, C.EXP_DATE, CO.COU_TYPE, CO.DISCOUNT , REV.REV_NUM, REV.REV_DATE, REV.REV_CONTENT, REV.RATE, ATT.ATT_NUM, ATT.ORIGIN_NAME, ATT.CHANGE_NAME, ATT.FILE_PATH, ATT.UPLOAD_DATE 
+		FROM RESERVE R
+		LEFT JOIN LAUNDRY L ON (R.RES_NUM = L.RES_NUM)
+		LEFT JOIN LCATEGORY LC ON (L.CAT_NUM = LC.CAT_NUM)
+		LEFT JOIN REPAIR RE ON (R.RES_NUM = RE.RES_NUM)
+        LEFT JOIN PAYMENT P ON (R.RES_NUM = P.RES_NUM)
+        LEFT JOIN CARD C ON (P.CARD_ID = C.CARD_ID)
+        LEFT JOIN REVIEW REV ON (R.RES_NUM = REV.RES_NUM)
+        LEFT JOIN ATTACHMENT ATT ON (REV.REV_NUM = ATT.REV_NUM)
+        LEFT JOIN COUPON CO ON (P.COU_NUM = CO.COU_NUM)
+		WHERE R.RES_NUM = #{resNum} AND P.STATUS = 'Y'
+ 	 </select>
+ </mapper>

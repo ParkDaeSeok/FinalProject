@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+ <mapper namespace="repair">
+ 	
+ 	<!-- 선택한 수선옵션들을 삽입하는 구문 -->
+ 	<insert id="insertRepair" parameterType="repair">
+ 		INSERT INTO REPAIR
+ 		VALUES(SEQ_REPNO.NEXTVAL,
+ 			   #{resNum},
+ 			   #{rcategory},
+ 			   #{lengthYN},
+ 			   #{widthYN},
+ 			   #{resealYN},
+ 			   #{zipYN},
+ 			   #{rPrice}) 
+ 	</insert>
+ 	
+ 	<!-- 정민 -->
+ 	 <!-- 관리자모드 통계관리에서 총 수선 건수 -->
+ 	<select id="selectCount" resultType="int">
+ 		SELECT COUNT(*)
+ 		FROM REPAIR
+ 	</select>
+ 	
+ 	
+ </mapper>
